@@ -33,6 +33,10 @@ Every ComfyUI workflow I open ends up looking like a plate of spaghetti within a
 
 Right-click on the canvas (empty space, not on a node) and pick one of:
 
+<p align="center">
+  <img src="menu.png" alt="CleanFreak's actions in the canvas right-click menu — Tidy by Role (horizontal/vertical), Tidy + Groups, Unpack subgraphs/groups + Tidy, Delete all groups, review & edit assignments" width="460">
+</p>
+
 - **✨ Tidy by Role (horizontal)** — columns left-to-right, no groups
 - **✨ Tidy by Role (vertical)** — rows top-to-bottom, no groups
 - **✨ Tidy by Role + Groups (horizontal)** — columns left-to-right, plus a colour-coded group card around each role bucket
