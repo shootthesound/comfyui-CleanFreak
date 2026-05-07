@@ -344,10 +344,16 @@ function classifyNode(node) {
 // Layout
 // =====================================================================
 
-const COL_GAP = 60;          // px between columns
+const COL_GAP = 60;          // px between columns when no groups are drawn
 const ROW_GAP = 28;          // px between rows in a column
 const TITLE_PAD = 30;        // extra space for node title bar
 const ORIGIN_PAD = 50;       // top/left margin from existing graph origin
+
+// Group rendering constants — shared between layout (so it can reserve
+// enough between-bucket space for a group card) and createRoleGroups (so
+// the group geometry actually matches what layout reserved).
+const GROUP_PAD = 24;        // padding between node and group border
+const GROUP_TITLE_BAR = 36;  // extra space at top of group for the title
 
 function topoOrderMap(graph) {
     // Use LiteGraph's executionOrder so nodes within a column arrange in
@@ -384,8 +390,8 @@ function createRoleGroups(buckets, usedRoles) {
     const graph = app.graph;
     if (!graph || typeof LiteGraph === "undefined" || !LiteGraph.LGraphGroup) return;
 
-    const PAD = 24;            // padding between node and group border
-    const TITLE_BAR = 36;      // extra space at top of group for the title
+    const PAD = GROUP_PAD;
+    const TITLE_BAR = GROUP_TITLE_BAR;
 
     for (const role of usedRoles) {
         const nodes = buckets[role];
@@ -458,9 +464,9 @@ function tidyByRole(orientation = "horizontal", opts = {}) {
     }
 
     if (orientation === "vertical") {
-        layoutVertical(buckets, usedRoles, originX, originY);
+        layoutVertical(buckets, usedRoles, originX, originY, addGroups);
     } else {
-        layoutHorizontal(buckets, usedRoles, originX, originY);
+        layoutHorizontal(buckets, usedRoles, originX, originY, addGroups);
     }
 
     if (addGroups) createRoleGroups(buckets, usedRoles);
@@ -471,9 +477,19 @@ function tidyByRole(orientation = "horizontal", opts = {}) {
 function nodeWidth(n)  { return (n.size && n.size[0]) || 200; }
 function nodeHeight(n) { return (n.size && n.size[1]) || 100; }
 
-function layoutHorizontal(buckets, usedRoles, originX, originY) {
+function layoutHorizontal(buckets, usedRoles, originX, originY, withGroups) {
     // Each role is a column. Width = max node width in column. Nodes stack
     // vertically within the column, top-aligned at originY.
+    //
+    // When groups are drawn, neighbouring columns each need GROUP_PAD of
+    // breathing room on their facing edge — otherwise group cards collide.
+    // The plain COL_GAP is already a touch wider than 2 * GROUP_PAD, so
+    // headroom here is comfortable, but we widen explicitly when groups are
+    // on for visual consistency with the vertical case.
+    const interColGap = withGroups
+        ? Math.max(COL_GAP, GROUP_PAD * 2 + 16)
+        : COL_GAP;
+
     let x = originX + ORIGIN_PAD;
     const yBase = originY + ORIGIN_PAD;
     for (const role of usedRoles) {
@@ -488,13 +504,27 @@ function layoutHorizontal(buckets, usedRoles, originX, originY) {
             n.pos = [nx, y];
             y += nodeHeight(n) + ROW_GAP + TITLE_PAD;
         }
-        x += colWidth + COL_GAP;
+        x += colWidth + interColGap;
     }
 }
 
-function layoutVertical(buckets, usedRoles, originX, originY) {
+function layoutVertical(buckets, usedRoles, originX, originY, withGroups) {
     // Each role is a row. Height = max node height in row. Nodes stack
     // horizontally within the row, left-aligned at originX.
+    //
+    // When groups are drawn, the next row's group title bar extends
+    // GROUP_PAD + GROUP_TITLE_BAR pixels ABOVE its first node, and the
+    // previous row's group bottom extends GROUP_PAD pixels BELOW its last
+    // node. So the gap between rows must clear:
+    //     prev_group_bottom_pad + next_group_title_top_pad
+    //   = GROUP_PAD + (GROUP_PAD + GROUP_TITLE_BAR)
+    // …plus a few px of breathing room. Without this, the next row's group
+    // title bar overlaps the previous row's group bottom — which is the
+    // visual bug the user spotted.
+    const interRowGap = withGroups
+        ? GROUP_PAD * 2 + GROUP_TITLE_BAR + 16
+        : ROW_GAP + TITLE_PAD;
+
     const xBase = originX + ORIGIN_PAD;
     let y = originY + ORIGIN_PAD;
     for (const role of usedRoles) {
@@ -507,7 +537,7 @@ function layoutVertical(buckets, usedRoles, originX, originY) {
             n.pos = [x, ny];
             x += nodeWidth(n) + COL_GAP;
         }
-        y += rowHeight + ROW_GAP + TITLE_PAD;
+        y += rowHeight + interRowGap;
     }
 }
 
