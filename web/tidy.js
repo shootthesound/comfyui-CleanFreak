@@ -1,4 +1,4 @@
-// comfyui-workflow-tidy — one-click workflow layout by node role.
+// comfyui-CleanFreak — one-click workflow layout by node role.
 //
 // Adds a "Tidy by Role" item set to the canvas right-click menu. Every node
 // is classified into a role bucket (loaders / encoders / samplers / decoders
@@ -7,8 +7,8 @@
 //
 // User-level overrides — assignments the user picks in the editor modal and
 // then "Save"s — get persisted to the backend's
-//   <ComfyUI>/user/workflow-tidy/role_overrides.json
-// file via the /workflow-tidy/overrides routes. Subsequent sessions and
+//   <ComfyUI>/user/cleanfreak/role_overrides.json
+// file via the /cleanfreak/overrides routes. Subsequent sessions and
 // workflows pick those up automatically, so the classifier learns from the
 // user over time and gradually knows about more nodes than the built-in
 // override table covers.
@@ -18,7 +18,7 @@
 
 import { app } from "/scripts/app.js";
 
-const ROUTE_BASE = "/workflow-tidy";
+const ROUTE_BASE = "/cleanfreak";
 
 // Module-level cache of user role overrides keyed by node class name.
 // Populated lazily on first use and refreshed on every successful save.
@@ -39,7 +39,7 @@ function ensureOverridesLoaded() {
                 }
             }
         } catch (e) {
-            console.warn("[workflow-tidy] failed to load user overrides:", e);
+            console.warn("[cleanfreak] failed to load user overrides:", e);
         } finally {
             USER_OVERRIDES_LOADED = true;
             USER_OVERRIDES_LOAD_PROMISE = null;
@@ -64,7 +64,7 @@ async function saveUserOverrides(overrides) {
         }
         return true;
     } catch (e) {
-        console.warn("[workflow-tidy] failed to save user overrides:", e);
+        console.warn("[cleanfreak] failed to save user overrides:", e);
         return false;
     }
 }
@@ -77,7 +77,7 @@ async function clearUserOverridesOnDisk() {
         USER_OVERRIDES_LOADED = true;
         return true;
     } catch (e) {
-        console.warn("[workflow-tidy] failed to clear user overrides:", e);
+        console.warn("[cleanfreak] failed to clear user overrides:", e);
         return false;
     }
 }
@@ -681,7 +681,7 @@ function showEditorModal(nodes) {
 
     const saveBtn = document.createElement("button");
     saveBtn.textContent = "Save assignments";
-    saveBtn.title = "Promote every per-node assignment in this list to a per-class default, saved to <ComfyUI>/user/workflow-tidy/role_overrides.json. Future workflows that contain the same node classes will use these assignments automatically.";
+    saveBtn.title = "Promote every per-node assignment in this list to a per-class default, saved to <ComfyUI>/user/cleanfreak/role_overrides.json. Future workflows that contain the same node classes will use these assignments automatically.";
     saveBtn.style.cssText = "background: #6b8d4a; color: #fff; border: none; padding: 7px 14px; border-radius: 4px; cursor: pointer;";
     saveBtn.addEventListener("click", async () => {
         // Build the new global overrides map by applying every visible row's
@@ -770,7 +770,7 @@ function showEditorModal(nodes) {
 // =====================================================================
 
 app.registerExtension({
-    name: "WorkflowTidy.ByRole",
+    name: "CleanFreak.TidyByRole",
     async setup(app) {
         // Kick the user-overrides fetch immediately so the first tidy /
         // editor call doesn't have to wait on the network round-trip.

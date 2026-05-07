@@ -1,8 +1,8 @@
-<h1 align="center">Workflow Tidy — for ComfyUI</h1>
+<h1 align="center">CleanFreak — for ComfyUI</h1>
 
 <p align="center">
   One-click <strong>tidy by role</strong> for any ComfyUI workflow.<br>
-  Loaders go in one column. Encoders in the next. Then samplers, decoders, outputs. Width-aware. Connections preserved.
+  Loaders go in one column. Encoders in the next. Then samplers, decoders, outputs. Width-aware. Group cards. Connections preserved.
 </p>
 
 <p align="center">
@@ -56,7 +56,7 @@ Within each column, nodes are sorted by ComfyUI's execution order, with `SaveIma
 Five-step lookup chain (highest priority wins):
 
 1. **Per-node session override** — anything you picked in this session's editor modal.
-2. **Per-class user override (saved to disk)** — anything you've ever pressed **Save assignments** on. Stored at `<ComfyUI>/user/workflow-tidy/role_overrides.json`. The file accumulates over time, so the more workflows you tidy the more nodes the classifier knows about by default.
+2. **Per-class user override (saved to disk)** — anything you've ever pressed **Save assignments** on. Stored at `<ComfyUI>/user/cleanfreak/role_overrides.json`. The file accumulates over time, so the more workflows you tidy the more nodes the classifier knows about by default.
 3. **Built-in class override table.** A lookup of every common class name → role. Covers the entire stock node set, the most popular custom packs, and every node from `shootthesound`'s pack family (Finding LoRA, Reference Latent+, Realtime LoRA, Clippy Reborn, Image of the Day, Model Diff to LoRA, Wan I2V Control, LongLook).
 4. **Node category.** Many ComfyUI nodes set a `CATEGORY` like `"loaders"`, `"sampling"`, `"image/upscaling"`, etc. We use that as a strong fallback signal.
 5. **Class-name regex.** Generic patterns: ends in `Encode` → encoders, ends in `Decode` → decoders, contains `Sample`/`Scheduler` → samplers, starts with `Load` → loaders, starts with `Save`/`Preview` → outputs, contains `Conditioning`/`Guidance`/`ControlNet` → conditioning, etc.
@@ -88,19 +88,19 @@ ComfyUI links are stored by node id (not by position), so changing `node.pos = [
 
 ### HTTP routes (for the curious)
 
-Three routes live under `/workflow-tidy/`:
+Three routes live under `/cleanfreak/`:
 
-- `GET  /workflow-tidy/overrides` — returns `{ overrides: {ClassName: role, …} }`
-- `POST /workflow-tidy/overrides` — body `{ overrides: {…} }`, replaces saved overrides with the supplied map
-- `POST /workflow-tidy/overrides/clear` — wipes saved overrides (no body)
+- `GET  /cleanfreak/overrides` — returns `{ overrides: {ClassName: role, …} }`
+- `POST /cleanfreak/overrides` — body `{ overrides: {…} }`, replaces saved overrides with the supplied map
+- `POST /cleanfreak/overrides/clear` — wipes saved overrides (no body)
 
-Storage: `<ComfyUI>/user/workflow-tidy/role_overrides.json`. Live-editable on disk; restart ComfyUI to pick up manual edits.
+Storage: `<ComfyUI>/user/cleanfreak/role_overrides.json`. Live-editable on disk; restart ComfyUI to pick up manual edits.
 
 ---
 
 ### Quick start
 
-1. Drop the `comfyui-workflow-tidy` folder into `ComfyUI/custom_nodes/`.
+1. Drop the `comfyui-CleanFreak` folder into `ComfyUI/custom_nodes/`.
 2. Restart ComfyUI (or reload the browser tab if hot-reloading is on).
 3. Right-click on empty canvas space → pick a tidy option.
 

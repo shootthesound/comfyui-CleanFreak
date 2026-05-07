@@ -1,4 +1,4 @@
-"""comfyui-workflow-tidy — one-click workflow layout by node role.
+"""comfyui-CleanFreak — one-click workflow layout by node role.
 
 Adds a "Tidy by Role" action set to the canvas right-click menu. Every node
 in the graph is classified into a role bucket (loaders, encoders,
@@ -14,7 +14,7 @@ future tidies start with a richer classifier than the built-in heuristics.
 
 Stored at::
 
-    <ComfyUI>/user/workflow-tidy/role_overrides.json
+    <ComfyUI>/user/cleanfreak/role_overrides.json
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ _LOCK = threading.Lock()
 
 
 def _overrides_path() -> str:
-    base = os.path.join(folder_paths.get_user_directory(), "workflow-tidy")
+    base = os.path.join(folder_paths.get_user_directory(), "cleanfreak")
     os.makedirs(base, exist_ok=True)
     return os.path.join(base, "role_overrides.json")
 
@@ -84,13 +84,13 @@ if _HAS_SERVER:
 
     routes = PromptServer.instance.routes
 
-    @routes.get("/workflow-tidy/overrides")
+    @routes.get("/cleanfreak/overrides")
     async def _get_overrides_route(request):
         with _LOCK:
             overrides = _load_overrides()
         return web.json_response({"overrides": overrides})
 
-    @routes.post("/workflow-tidy/overrides")
+    @routes.post("/cleanfreak/overrides")
     async def _save_overrides_route(request):
         try:
             data = await request.json()
@@ -106,7 +106,7 @@ if _HAS_SERVER:
             _save_overrides(cleaned)
         return web.json_response({"ok": True, "overrides": cleaned})
 
-    @routes.post("/workflow-tidy/overrides/clear")
+    @routes.post("/cleanfreak/overrides/clear")
     async def _clear_overrides_route(request):
         with _LOCK:
             _save_overrides({})
