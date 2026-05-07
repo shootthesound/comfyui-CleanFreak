@@ -26,7 +26,7 @@ Right-click on the canvas (empty space, not on a node) and pick one of:
 - **✨ Tidy by Role + Groups (horizontal)** — columns left-to-right, plus a colour-coded group card around each role bucket
 - **✨ Tidy by Role + Groups (vertical)** — same, vertical
 - **✨ Tidy by Role — Delete all groups** — wipe every group on the canvas without touching node positions
-- **✨ Tidy by Role — preview classification…** — show a modal listing exactly which bucket every node landed in, with a "Tidy now" button
+- **✨ Tidy by Role — review & edit assignments…** — open an interactive modal listing every node grouped by its current bucket, each with a dropdown to re-assign its role. Per-node overrides stick for the rest of the session and are used by every subsequent Tidy. The footer has Tidy / Tidy + Groups buttons for both orientations, plus a "Reset overrides" button if you want to clear edits and start fresh.
 
 The two `+ Groups` variants delete any pre-existing groups before drawing fresh ones, so re-tidying never stacks stale groups on top of new ones.
 

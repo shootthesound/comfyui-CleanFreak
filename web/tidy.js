@@ -163,7 +163,13 @@ const CLASS_OVERRIDES = {
 };
 
 // Fallback classifier: regex on (lowercased) class name + node category.
+// Per-node user override (set from the preview modal) wins over everything
+// else, so once a user re-assigns a node it stays in that bucket for the
+// rest of the session.
 function classifyNode(node) {
+    if (node._tidy_role && ROLES.includes(node._tidy_role)) {
+        return node._tidy_role;
+    }
     const cls = (node.type || node.comfyClass || "").toLowerCase();
 
     // 1) Exact override
@@ -374,27 +380,16 @@ function layoutVertical(buckets, usedRoles, originX, originY) {
 // Diagnostics — show the user what we classified things as before tidying
 // =====================================================================
 
-function showClassificationReport() {
+function showClassificationEditor() {
     const graph = app.graph;
     if (!graph || !graph._nodes || !graph._nodes.length) {
         alert("Workflow is empty.");
         return;
     }
-    const buckets = bucketize(graph._nodes);
-    const lines = [];
-    for (const role of ROLES) {
-        const items = buckets[role];
-        if (!items || items.length === 0) continue;
-        lines.push(`${role.toUpperCase()} (${items.length}):`);
-        for (const n of items) {
-            lines.push(`  • ${n.type}${n.title && n.title !== n.type ? ` — ${n.title}` : ""}`);
-        }
-        lines.push("");
-    }
-    showReportModal(lines.join("\n"));
+    showEditorModal(graph._nodes);
 }
 
-function showReportModal(body) {
+function showEditorModal(nodes) {
     const backdrop = document.createElement("div");
     backdrop.style.cssText = `
         position: fixed; inset: 0; background: rgba(0,0,0,0.6);
@@ -404,47 +399,147 @@ function showReportModal(body) {
     const modal = document.createElement("div");
     modal.style.cssText = `
         background: #2a2a2a; color: #ddd; border: 1px solid #555;
-        border-radius: 8px; padding: 16px; width: 560px; max-width: 90vw;
-        max-height: 80vh; display: flex; flex-direction: column; gap: 10px;
+        border-radius: 8px; padding: 16px; width: 720px; max-width: 92vw;
+        max-height: 84vh; display: flex; flex-direction: column; gap: 10px;
     `;
+
     const header = document.createElement("div");
     header.style.cssText = "font-size: 14px; font-weight: bold; color: #aaa;";
-    header.textContent = "Tidy by Role — classification preview";
-    const pre = document.createElement("pre");
-    pre.style.cssText = `
+    header.textContent = "Tidy by Role — review & edit assignments";
+
+    const hint = document.createElement("div");
+    hint.style.cssText = "font-size: 11px; color: #888;";
+    hint.textContent = "Change any node's role with the dropdown on its row. Edits stick for the rest of this session and are used by the next Tidy.";
+
+    const list = document.createElement("div");
+    list.style.cssText = `
         flex: 1; overflow: auto; background: #1a1a1a; border: 1px solid #444;
-        border-radius: 4px; padding: 12px; font-size: 12px;
-        font-family: monospace; white-space: pre-wrap; margin: 0;
+        border-radius: 4px; padding: 4px; font-size: 12px;
     `;
-    pre.textContent = body || "(no nodes)";
+
+    // Sort rows by current role bucket so similar nodes land near each other.
+    const rows = nodes
+        .map((n) => ({ n, role: classifyNode(n) }))
+        .sort((a, b) => {
+            const ai = ROLES.indexOf(a.role);
+            const bi = ROLES.indexOf(b.role);
+            if (ai !== bi) return ai - bi;
+            return (a.n.type || "").localeCompare(b.n.type || "");
+        });
+
+    let currentRoleHeader = null;
+
+    for (const { n, role } of rows) {
+        if (role !== currentRoleHeader) {
+            currentRoleHeader = role;
+            const sectionH = document.createElement("div");
+            sectionH.style.cssText = `
+                font-size: 11px; font-weight: bold; color: #aab; text-transform: uppercase;
+                padding: 8px 8px 4px; letter-spacing: 0.5px;
+            `;
+            sectionH.dataset.tidyRoleHeader = role;
+            sectionH.textContent = `${ROLE_TITLES[role] || role}`;
+            list.appendChild(sectionH);
+        }
+
+        const row = document.createElement("div");
+        row.style.cssText = `
+            display: flex; align-items: center; gap: 10px;
+            padding: 6px 8px; border-radius: 3px;
+        `;
+        row.dataset.tidyRow = "1";
+
+        const label = document.createElement("div");
+        label.style.cssText = "flex: 1; font-family: monospace; color: #ddd; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;";
+        const display = (n.title && n.title !== n.type) ? `${n.type} — ${n.title}` : (n.type || "(unknown)");
+        label.textContent = display;
+        label.title = display;
+
+        const select = document.createElement("select");
+        select.style.cssText = `
+            background: #2a2a2a; color: #ddd; border: 1px solid #555;
+            padding: 4px 8px; border-radius: 3px; font-size: 12px;
+            min-width: 160px;
+        `;
+        for (const r of ROLES) {
+            const opt = document.createElement("option");
+            opt.value = r;
+            opt.textContent = ROLE_TITLES[r] || r;
+            if (r === role) opt.selected = true;
+            select.appendChild(opt);
+        }
+        select.addEventListener("change", (e) => {
+            const newRole = e.target.value;
+            n._tidy_role = newRole;
+        });
+
+        row.appendChild(label);
+        row.appendChild(select);
+        list.appendChild(row);
+    }
+
+    if (rows.length === 0) {
+        const empty = document.createElement("div");
+        empty.style.cssText = "padding: 24px; color: #888; text-align: center;";
+        empty.textContent = "(no nodes)";
+        list.appendChild(empty);
+    }
+
     const footer = document.createElement("div");
-    footer.style.cssText = "display: flex; gap: 8px; justify-content: flex-end;";
-    const closeBtn = document.createElement("button");
-    closeBtn.textContent = "Close";
-    closeBtn.style.cssText = `
-        background: #444; color: #ddd; border: none; padding: 6px 14px;
-        border-radius: 4px; cursor: pointer;
-    `;
-    const tidyBtn = document.createElement("button");
-    tidyBtn.textContent = "Tidy now (horizontal)";
-    tidyBtn.style.cssText = `
-        background: #4a6; color: #111; border: none; padding: 6px 14px;
-        border-radius: 4px; cursor: pointer; font-weight: bold;
-    `;
+    footer.style.cssText = "display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap;";
+
     const close = () => backdrop.parentNode && backdrop.parentNode.removeChild(backdrop);
-    closeBtn.addEventListener("click", close);
-    tidyBtn.addEventListener("click", () => {
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.textContent = "Close";
+    cancelBtn.style.cssText = "background: #444; color: #ddd; border: none; padding: 7px 14px; border-radius: 4px; cursor: pointer;";
+    cancelBtn.addEventListener("click", close);
+
+    const resetBtn = document.createElement("button");
+    resetBtn.textContent = "Reset overrides";
+    resetBtn.title = "Clear every per-node role override and re-classify from scratch";
+    resetBtn.style.cssText = "background: #5a4444; color: #ddd; border: none; padding: 7px 14px; border-radius: 4px; cursor: pointer;";
+    resetBtn.addEventListener("click", () => {
+        for (const { n } of rows) delete n._tidy_role;
         close();
-        tidyByRole("horizontal");
+        showClassificationEditor();
     });
-    backdrop.addEventListener("click", (e) => { if (e.target === backdrop) close(); });
-    footer.appendChild(closeBtn);
-    footer.appendChild(tidyBtn);
+
+    const tidyHBtn = document.createElement("button");
+    tidyHBtn.textContent = "Tidy (horizontal)";
+    tidyHBtn.style.cssText = "background: #406688; color: #fff; border: none; padding: 7px 14px; border-radius: 4px; cursor: pointer;";
+    tidyHBtn.addEventListener("click", () => { close(); tidyByRole("horizontal"); });
+
+    const tidyVBtn = document.createElement("button");
+    tidyVBtn.textContent = "Tidy (vertical)";
+    tidyVBtn.style.cssText = "background: #406688; color: #fff; border: none; padding: 7px 14px; border-radius: 4px; cursor: pointer;";
+    tidyVBtn.addEventListener("click", () => { close(); tidyByRole("vertical"); });
+
+    const tidyHGBtn = document.createElement("button");
+    tidyHGBtn.textContent = "Tidy + Groups (horizontal)";
+    tidyHGBtn.style.cssText = "background: #4a8a4a; color: #fff; border: none; padding: 7px 14px; border-radius: 4px; cursor: pointer; font-weight: bold;";
+    tidyHGBtn.addEventListener("click", () => { close(); tidyByRole("horizontal", { groups: true }); });
+
+    const tidyVGBtn = document.createElement("button");
+    tidyVGBtn.textContent = "Tidy + Groups (vertical)";
+    tidyVGBtn.style.cssText = "background: #4a8a4a; color: #fff; border: none; padding: 7px 14px; border-radius: 4px; cursor: pointer; font-weight: bold;";
+    tidyVGBtn.addEventListener("click", () => { close(); tidyByRole("vertical", { groups: true }); });
+
+    footer.appendChild(cancelBtn);
+    footer.appendChild(resetBtn);
+    footer.appendChild(tidyHBtn);
+    footer.appendChild(tidyVBtn);
+    footer.appendChild(tidyHGBtn);
+    footer.appendChild(tidyVGBtn);
+
     modal.appendChild(header);
-    modal.appendChild(pre);
+    modal.appendChild(hint);
+    modal.appendChild(list);
     modal.appendChild(footer);
     backdrop.appendChild(modal);
     document.body.appendChild(backdrop);
+
+    backdrop.addEventListener("click", (e) => { if (e.target === backdrop) close(); });
 }
 
 // =====================================================================
@@ -486,8 +581,8 @@ app.registerExtension({
                 },
             });
             options.push({
-                content: "✨ Tidy by Role — preview classification…",
-                callback: () => showClassificationReport(),
+                content: "✨ Tidy by Role — review & edit assignments…",
+                callback: () => showClassificationEditor(),
             });
             return options;
         };
