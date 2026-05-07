@@ -352,8 +352,15 @@ const ORIGIN_PAD = 50;       // top/left margin from existing graph origin
 // Group rendering constants — shared between layout (so it can reserve
 // enough between-bucket space for a group card) and createRoleGroups (so
 // the group geometry actually matches what layout reserved).
+const GROUP_FONT_SIZE = 24;
 const GROUP_PAD = 24;        // padding between node and group border
-const GROUP_TITLE_BAR = 36;  // extra space at top of group for the title
+// LiteGraph's group title is drawn at the top of the group bounds and
+// occupies roughly `font_size + descender + top/bottom padding` ≈
+// `font_size * 1.6` of vertical space. Empirically the user saw ~7-8 px
+// of overlap with `36`, so we reserve `font_size * 2 + 4` (= 52 for
+// font_size 24) which leaves a comfortable visible gap between the title
+// bar and the topmost node.
+const GROUP_TITLE_BAR = GROUP_FONT_SIZE * 2 + 4;
 
 function topoOrderMap(graph) {
     // Use LiteGraph's executionOrder so nodes within a column arrange in
@@ -418,8 +425,10 @@ function createRoleGroups(buckets, usedRoles) {
         ];
         group.color = ROLE_COLOURS[role] || "#666";
         // LiteGraph stores font_size on the group; default looks tiny inside
-        // the wide title bar, so bump it to something readable.
-        group.font_size = 24;
+        // the wide title bar, so bump it to something readable. Pinned to
+        // GROUP_FONT_SIZE so the layout's title-bar reservation stays in
+        // sync with the actually-rendered title size.
+        group.font_size = GROUP_FONT_SIZE;
         graph.add(group);
     }
 }
