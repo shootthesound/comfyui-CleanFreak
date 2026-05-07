@@ -10,6 +10,17 @@
   <a href="https://buymeacoffee.com/lorasandlenses"><img src="https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me A Coffee"></a>
 </p>
 
+<table align="center">
+  <tr>
+    <td align="center"><strong>Before</strong></td>
+    <td align="center"><strong>After</strong> — one click, Tidy + Groups</td>
+  </tr>
+  <tr>
+    <td><img src="before.png" alt="Spaghetti workflow before CleanFreak — overlapping nodes, criss-crossing wires" width="460"></td>
+    <td><img src="after.png" alt="Same workflow tidied by role — loaders / encoders / conditioning / samplers / decoders / outputs each in their own coloured group, neatly stacked" width="460"></td>
+  </tr>
+</table>
+
 ---
 
 ### Why I built this
