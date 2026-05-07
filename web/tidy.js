@@ -155,6 +155,93 @@ const CLASS_OVERRIDES = {
     "ipadaptermodelloader": "loaders",
     "modelmergesimple": "loaders",
 
+    // --- ComfyUI core extras (anything in nodes.py / comfy_extras not
+    // already covered above) ---
+    "checkpointsave": "outputs",
+    "modelsave": "outputs",
+    "vaesave": "outputs",
+    "clipsave": "outputs",
+    "imageonlycheckpointsave": "outputs",
+    "previewany": "outputs",
+    "clipmergeadd": "loaders",
+    "clipmergesimple": "loaders",
+    "clipmergesubtract": "loaders",
+    "clipsetlastlayer": "loaders",
+    "clipvisionloader": "loaders",
+    "clipvisionencode": "encoders",
+    "diffcontrolnetloader": "loaders",
+    "diffusersloader": "loaders",
+    "gligenloader": "loaders",
+    "gligentextboxapply": "conditioning",
+    "imageonlycheckpointloader": "loaders",
+    "loadimageoutput": "image-input",
+    "loadlatent": "image-input",
+    "emptyimage": "image-input",
+    "webcamcapture": "image-input",
+    "loraloaderbypass": "loaders",
+    "loraloaderbypassmodelonly": "loaders",
+    "modelpatchloader": "loaders",
+    // Model-merge family — every variant goes in loaders since they produce
+    // a (modified) MODEL.
+    "modelmergeadd": "loaders",
+    "modelmergeblocks": "loaders",
+    "modelmergesubtract": "loaders",
+    "modelmergeauraflow": "loaders",
+    "modelmergecosmos14b": "loaders",
+    "modelmergecosmos7b": "loaders",
+    "modelmergecosmospredict2_14b": "loaders",
+    "modelmergecosmospredict2_2b": "loaders",
+    "modelmergeflux1": "loaders",
+    "modelmergeltxv": "loaders",
+    "modelmergemochipreview": "loaders",
+    "modelmergeqwenimage": "loaders",
+    "modelmergesd1": "loaders",
+    "modelmergesd2": "loaders",
+    "modelmergesd35_large": "loaders",
+    "modelmergesd3_2b": "loaders",
+    "modelmergesdxl": "loaders",
+    "modelmergewan2_1": "loaders",
+    // Model-sampling family — these patch the model's sampling behaviour.
+    // Existing modelsamplingflux / modelsamplingsd3 were classified as
+    // conditioning; keep the family consistent.
+    "modelsamplingauraflow": "conditioning",
+    "modelsamplingcontinuousedm": "conditioning",
+    "modelsamplingcontinuousv": "conditioning",
+    "modelsamplingdiscrete": "conditioning",
+    "modelsamplingstablecascade": "conditioning",
+    "modelcomputedtype": "conditioning",
+    // Conditioning extras
+    "conditioningsetareapercentage": "conditioning",
+    "conditioningsetareapercentagevideo": "conditioning",
+    "inpaintmodelconditioning": "conditioning",
+    "stylemodelapply": "conditioning",
+    "usostylereference": "conditioning",
+    "qwenimagediffsynthcontrolnet": "conditioning",
+    "zimagefuncontrolnet": "conditioning",
+    "rescalecfg": "conditioning",
+    "videolinearcfgguidance": "conditioning",
+    "videotrianglecfgguidance": "conditioning",
+    "svd_img2vid_conditioning": "conditioning",
+    "setlatentnoisemask": "conditioning",
+    "unclipconditioning": "conditioning",
+    "unclipcheckpointloader": "loaders",
+    // Sampler / scheduler extras
+    "ltxvlatentupsampler": "samplers",
+    // Latent ops → post-processing of the latent (not creation)
+    "latentblend": "post",
+    "latentcomposite": "post",
+    "latentcrop": "post",
+    "latentflip": "post",
+    "latentfrombatch": "post",
+    "latentrotate": "post",
+    "latentupscale": "post",
+    "latentupscaleby": "post",
+    "repeatlatentbatch": "post",
+    // Image ops
+    "imagebatch": "post",
+    "imageinvert": "post",
+    "imagepadforoutpaint": "post",
+
     // shootthesound packs — Realtime LoRA (selective + analyzer loaders +
     // model-layer editors, all of which modify the active model)
     "applytrainedlora": "loaders",
@@ -668,6 +755,96 @@ const CLASS_OVERRIDES = {
     "image to noise": "post",
     "images to linear": "post",
     "images to rgb": "post",
+    // WAS — number/seed/value primitives (often feed sampler seeds, sizes,
+    // strengths). Group as image-input so they sit alongside the latent /
+    // image source nodes that consume them.
+    "number counter": "image-input",
+    "number input condition": "image-input",
+    "number multiple of": "image-input",
+    "number operation": "image-input",
+    "number pi": "image-input",
+    "number to float": "image-input",
+    "number to int": "image-input",
+    "number to seed": "image-input",
+    "number to string": "image-input",
+    "number to text": "image-input",
+    "image size to number": "image-input",
+    "latent size to number": "image-input",
+    "image to seed": "image-input",
+    "image aspect ratio": "image-input",
+    // WAS — text/string conversion utilities
+    "string to text": "prompts",
+    "text to string": "prompts",
+    "text to number": "prompts",
+    "boolean to text": "prompts",
+    "text add token by input": "prompts",
+    "text add tokens": "prompts",
+    "text compare": "prompts",
+    "text contains": "prompts",
+    "text find": "prompts",
+    "text dictionary convert": "prompts",
+    "text dictionary get": "prompts",
+    "text dictionary keys": "prompts",
+    "text dictionary new": "prompts",
+    "text dictionary to text": "prompts",
+    "text dictionary update": "prompts",
+    "text file history loader": "prompts",
+    "text list": "prompts",
+    "text list concatenate": "prompts",
+    "text list to text": "prompts",
+    "text parse tokens": "prompts",
+    "text sort": "prompts",
+    "text string truncate": "prompts",
+    "text to console": "outputs",
+    // WAS — masks (post-processing of mask data)
+    "convert masks to images": "post",
+    "tensor batch to image": "post",
+    "create grid image": "post",
+    "create grid image from batch": "post",
+    "midas depth approximation": "post",
+    "midas mask image": "post",
+    "clipsg2": "post",
+    "clipseg2": "post",
+    "clipseg masking": "post",
+    "clipseg batch masking": "post",
+    "sam image mask": "post",
+    "sam parameters": "post",
+    "sam parameters combine": "post",
+    "image bounds": "post",
+    "image color palette": "post",
+    "image analyze": "post",
+    "mask arbitrary region": "post",
+    "mask batch": "post",
+    "mask batch to mask": "post",
+    "mask ceiling region": "post",
+    "mask crop dominant region": "post",
+    "mask crop minority region": "post",
+    "mask crop region": "post",
+    "mask dilate region": "post",
+    "mask dominant region": "post",
+    "mask erode region": "post",
+    "mask fill holes": "post",
+    "mask floor region": "post",
+    "mask gaussian region": "post",
+    "mask invert": "post",
+    "mask minority region": "post",
+    "mask paste region": "post",
+    "mask rect area": "post",
+    "mask rect area (advanced)": "post",
+    "mask smooth region": "post",
+    "mask threshold region": "post",
+    "masks add": "post",
+    "masks combine batch": "post",
+    "masks combine regions": "post",
+    "masks subtract": "post",
+    "hsl to hex": "post",
+    "hex to hsl": "post",
+    // WAS — Random number / Seed / cache (input-ish utilities)
+    "constant number": "image-input",
+    "random number": "image-input",
+    "load text file": "image-input",
+    "load cache": "image-input",
+    "cache node": "image-input",
 
     // --- comfyui-easy-use (yolain) ---
     // "easy *" wrappers — most are loaders, samplers, conditioning appliers,
@@ -1000,6 +1177,81 @@ const CLASS_OVERRIDES = {
     // Model patches that change CFG / attention behaviour during sampling.
     // Closest bucket is "conditioning" since they reshape how conditioning
     // is consumed at inference time.
+    // --- LTX-Video pack family ---
+    // Lightricks/ComfyUI-LTXVideo + logtd/ComfyUI-LTXTricks (deprecated,
+    // names overlap) + kijai/ComfyUI-KJNodes (LTXV-specific subset).
+    // Loaders
+    "ltxvgemmaclipmodelloader": "loaders",
+    "ltxvpromptenhancerloader": "loaders",
+    "ltxvq8loramodelloader": "loaders",
+    "ltx2loraloaderadvanced": "loaders",
+    "lowvramcheckpointloader": "loaders",
+    "lowvramaudiovaeloader": "loaders",
+    "lowvramlatentupscalemodelloader": "loaders",
+    // Samplers
+    "ltxvbasesampler": "samplers",
+    "ltxvextendsampler": "samplers",
+    "ltxvincontextsampler": "samplers",
+    "ltxvloopingsampler": "samplers",
+    "ltxvtiledsampler": "samplers",
+    "ltxflowedittcfgguider": "samplers",
+    "ltxfloweditcfgguider": "samplers",
+    "ltxflowedittsampler": "samplers",
+    "ltxfloweditsampler": "samplers",
+    "ltxrfforwardodesampler": "samplers",
+    "ltxrfreverseodesampler": "samplers",
+    "ltxforwardmodelsamplingpred": "samplers",
+    "ltxreversemodelsamplingpred": "samplers",
+    "ltx2samplingpreviewoverride": "samplers",
+    "ltx2audiolatentnormalizingsampling": "samplers",
+    "ltxq8patch": "samplers",
+    "ltxvlatentupsampler": "samplers",
+    // Decoders
+    "ltxvtiledvaedecode": "decoders",
+    // Conditioning + model patches + guides + attention overrides
+    "addlatentguide": "conditioning",
+    "ltxvaddlatentguide": "conditioning",
+    "ltxvaddguideadvanced": "conditioning",
+    "ltxvaddguidemulti": "conditioning",
+    "ltxvaddguidesfrombatch": "conditioning",
+    "ltxvadainlatent": "conditioning",
+    "ltxvapplystg": "conditioning",
+    "ltxvstatnormlatent": "conditioning",
+    "ltxvperstepadainpatcher": "conditioning",
+    "ltxvperstepstatnormpatcher": "conditioning",
+    "ltxvpatchervae": "conditioning",
+    "ltxvlinearoverlaplatenttransition": "conditioning",
+    "ltxvmultipromptprovider": "conditioning",
+    "ltxvpromptenhancer": "conditioning",
+    "ltxvpreprocessmasks": "conditioning",
+    "ltxvsetvideolatentnoisemasks": "conditioning",
+    "ltxvimgtovideoconditiononly": "conditioning",
+    "ltxvimgtovideoinplacekj": "conditioning",
+    "modifyltxmodel": "conditioning",
+    "guiderparameters": "conditioning",
+    "multimodalguider": "conditioning",
+    "stgguidernode": "conditioning",
+    "stgguideradvanced": "conditioning",
+    "stgadvancedpresets": "conditioning",
+    "dynamicconditioning": "conditioning",
+    "ltxattentionbank": "conditioning",
+    "ltxprepareattninjections": "conditioning",
+    "ltxattentiooverride": "conditioning",
+    "ltxattnoverride": "conditioning",
+    "ltxperturbedattention": "conditioning",
+    "ltxfetaenhance": "conditioning",
+    "ltx2_nag": "conditioning",
+    "ltxvchunkfeedforward": "conditioning",
+    "ltx2attentiontunerpatch": "conditioning",
+    "ltx2memoryefficientsageattentionpatch": "conditioning",
+    "ltxvaudiovideomask": "conditioning",
+    "set vae decoder noise": "conditioning",
+    // Post-processing
+    "ltxvselectlatents": "post",
+    "imagetocpu": "post",
+    // Prompt enhancement
+    "ltxvgemmaenhanceprompt": "prompts",
+
     "automatic cfg": "conditioning",
     "automatic cfg - advanced": "conditioning",
     "automatic cfg - attention modifiers": "conditioning",
@@ -1116,6 +1368,34 @@ function bucketize(nodes) {
     return buckets;
 }
 
+// Unpack any group nodes (and any nested ones they contain) into the main
+// graph. Uses ComfyUI's built-in `convertToNodes()` method that's installed
+// on every group-node instance — same code path triggered by the right-click
+// "Convert to nodes" menu item or the Alt+Shift+G shortcut.
+//
+// Returns the number of group nodes unpacked. Iterates until no group nodes
+// remain so nested cases get fully flattened. Bails after a sane safety
+// ceiling so a buggy node can't infinite-loop.
+function unpackAllGroups() {
+    const graph = app.graph;
+    if (!graph || !graph._nodes) return 0;
+    let totalUnpacked = 0;
+    for (let pass = 0; pass < 16; pass++) {
+        const groupNodes = graph._nodes.filter((n) => typeof n.convertToNodes === "function");
+        if (groupNodes.length === 0) break;
+        for (const gn of groupNodes) {
+            try {
+                gn.convertToNodes();
+                totalUnpacked++;
+            } catch (e) {
+                console.warn("[cleanfreak] convertToNodes() failed on", gn?.type, e);
+            }
+        }
+    }
+    if (totalUnpacked > 0) graph.setDirtyCanvas(true, true);
+    return totalUnpacked;
+}
+
 function deleteAllGroups() {
     const graph = app.graph;
     if (!graph || !graph._groups) return 0;
@@ -1169,9 +1449,14 @@ function createRoleGroups(buckets, usedRoles) {
 }
 
 function tidyByRole(orientation = "horizontal", opts = {}) {
-    const { groups: addGroups = false } = opts;
+    const { groups: addGroups = false, unpack: unpackGroups = false } = opts;
     const graph = app.graph;
     if (!graph || !graph._nodes || !graph._nodes.length) return;
+
+    // Optionally flatten every group node (and any nested ones) into the
+    // main graph BEFORE classifying — so what's tidied is a clean flat list
+    // of real nodes, not a single group-node placeholder.
+    if (unpackGroups) unpackAllGroups();
 
     // If we're going to add coloured role groups, wipe any pre-existing
     // groups first — otherwise old / stale group cards stack on every tidy.
@@ -1461,26 +1746,42 @@ function showEditorModal(nodes) {
         }
     });
 
+    // Unpack-groups toggle — when ticked, every Tidy button below first
+    // flattens any group nodes (and nested ones) before classifying.
+    const unpackWrap = document.createElement("label");
+    unpackWrap.style.cssText = "margin-right: auto; display: flex; align-items: center; gap: 6px; color: #ccc; font-size: 12px; cursor: pointer; user-select: none;";
+    const unpackChk = document.createElement("input");
+    unpackChk.type = "checkbox";
+    unpackChk.style.cssText = "margin: 0;";
+    const unpackTxt = document.createElement("span");
+    unpackTxt.textContent = "Unpack group nodes first";
+    unpackTxt.title = "Before tidying, expand every group node (and any nested ones) into its constituent nodes — same as ComfyUI's right-click ‘Convert to Nodes’.";
+    unpackWrap.appendChild(unpackChk);
+    unpackWrap.appendChild(unpackTxt);
+
     const tidyHBtn = document.createElement("button");
     tidyHBtn.textContent = "Tidy (horizontal)";
     tidyHBtn.style.cssText = "background: #406688; color: #fff; border: none; padding: 7px 14px; border-radius: 4px; cursor: pointer;";
-    tidyHBtn.addEventListener("click", () => { close(); tidyByRole("horizontal"); });
+    tidyHBtn.addEventListener("click", () => { close(); tidyByRole("horizontal", { unpack: unpackChk.checked }); });
 
     const tidyVBtn = document.createElement("button");
     tidyVBtn.textContent = "Tidy (vertical)";
     tidyVBtn.style.cssText = "background: #406688; color: #fff; border: none; padding: 7px 14px; border-radius: 4px; cursor: pointer;";
-    tidyVBtn.addEventListener("click", () => { close(); tidyByRole("vertical"); });
+    tidyVBtn.addEventListener("click", () => { close(); tidyByRole("vertical", { unpack: unpackChk.checked }); });
 
     const tidyHGBtn = document.createElement("button");
     tidyHGBtn.textContent = "Tidy + Groups (horizontal)";
     tidyHGBtn.style.cssText = "background: #4a8a4a; color: #fff; border: none; padding: 7px 14px; border-radius: 4px; cursor: pointer; font-weight: bold;";
-    tidyHGBtn.addEventListener("click", () => { close(); tidyByRole("horizontal", { groups: true }); });
+    tidyHGBtn.addEventListener("click", () => { close(); tidyByRole("horizontal", { groups: true, unpack: unpackChk.checked }); });
 
     const tidyVGBtn = document.createElement("button");
     tidyVGBtn.textContent = "Tidy + Groups (vertical)";
     tidyVGBtn.style.cssText = "background: #4a8a4a; color: #fff; border: none; padding: 7px 14px; border-radius: 4px; cursor: pointer; font-weight: bold;";
-    tidyVGBtn.addEventListener("click", () => { close(); tidyByRole("vertical", { groups: true }); });
+    tidyVGBtn.addEventListener("click", () => { close(); tidyByRole("vertical", { groups: true, unpack: unpackChk.checked }); });
 
+    // Unpack toggle sits at the LEFT of the footer (margin-right: auto pushes
+    // the Tidy / Save / Cancel buttons to the right).
+    footer.appendChild(unpackWrap);
     footer.appendChild(cancelBtn);
     footer.appendChild(clearDiskBtn);
     footer.appendChild(resetBtn);
@@ -1539,6 +1840,23 @@ app.registerExtension({
                     if (typeof window !== "undefined") {
                         // Tiny inline confirmation; alert is sufficient for one-off.
                         alert(`Deleted ${n} group${n === 1 ? "" : "s"}.`);
+                    }
+                },
+            });
+            options.push({
+                content: "✨ Tidy by Role — Unpack groups + Tidy + Groups (horizontal)",
+                callback: () => tidyByRole("horizontal", { groups: true, unpack: true }),
+            });
+            options.push({
+                content: "✨ Tidy by Role — Unpack groups + Tidy + Groups (vertical)",
+                callback: () => tidyByRole("vertical", { groups: true, unpack: true }),
+            });
+            options.push({
+                content: "✨ Tidy by Role — Unpack all group nodes (no tidy)",
+                callback: () => {
+                    const n = unpackAllGroups();
+                    if (typeof window !== "undefined") {
+                        alert(`Unpacked ${n} group node${n === 1 ? "" : "s"}.`);
                     }
                 },
             });

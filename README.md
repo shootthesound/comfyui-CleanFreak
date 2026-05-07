@@ -27,7 +27,9 @@ Right-click on the canvas (empty space, not on a node) and pick one of:
 - **✨ Tidy by Role + Groups (horizontal)** — columns left-to-right, plus a colour-coded group card around each role bucket
 - **✨ Tidy by Role + Groups (vertical)** — same, vertical
 - **✨ Tidy by Role — Delete all groups** — wipe every group on the canvas without touching node positions
-- **✨ Tidy by Role — review & edit assignments…** — open an interactive modal listing every node grouped by its current bucket, each with a dropdown to re-assign its role. Per-node overrides stick for the rest of the session and are used by every subsequent Tidy. The footer has Tidy / Tidy + Groups buttons for both orientations, plus a "Reset overrides" button if you want to clear edits and start fresh.
+- **✨ Tidy by Role — Unpack groups + Tidy + Groups (horizontal/vertical)** — first flatten every group node (and any nested ones) into its constituent nodes via ComfyUI's built-in `convertToNodes()`, then tidy with coloured group cards. Use this when a workflow uses ComfyUI group-nodes and you want the underlying nodes laid out properly.
+- **✨ Tidy by Role — Unpack all group nodes (no tidy)** — flatten group nodes without re-laying anything out.
+- **✨ Tidy by Role — review & edit assignments…** — open an interactive modal listing every node grouped by its current bucket, each with a dropdown to re-assign its role. Per-node overrides stick for the rest of the session and are used by every subsequent Tidy. The footer has Tidy / Tidy + Groups buttons for both orientations, an **Unpack group nodes first** toggle, plus Save / Reset / Forget-saved buttons.
 
 The two `+ Groups` variants delete any pre-existing groups before drawing fresh ones, so re-tidying never stacks stale groups on top of new ones.
 
@@ -73,6 +75,7 @@ Five-step lookup chain (highest priority wins):
      - `comfyui-ollama` (all `Ollama*` LLM nodes → `prompts`, since their text output is typically wired into a `CLIPTextEncode`)
      - `comfyui-automaticcfg` (every `Automatic CFG *` model patch + `SAG delayed activation` + `Temperature *` + `Zero Uncond CFG *` → `conditioning`)
      - `ComfyUI_Comfyroll_CustomNodes` (CR LoRA Stack / CR Apply LoRA Stack → `loaders`, CR Apply ControlNet / Multi-ControlNet → `conditioning`, CR Image Output → `outputs`, CR Upscale Image / CR Halftone / CR Vignette → `post`)
+     - `ComfyUI-LTXVideo` + LTX-Tricks + KJNodes LTXV-subset — every `LTXV*Sampler` / `LTXFlowEdit*` / `LTX*ODESampler` / `LTX*ModelSamplingPred` → `samplers`; every guide / patch / attention override / `STG*Guider` / `Multimodal*Guider` / `LTX*Audio*Mask` → `conditioning`; `LTXVTiledVAEDecode` → `decoders`; LTXVQ8/Gemma/Prompt-Enhancer/LowVRAM-* loaders → `loaders`; `LTXVGemmaEnhancePrompt` → `prompts`; `LTXVSelectLatents` / `ImageToCPU` → `post`.
    - **Every node in `shootthesound`'s pack family** — Finding LoRA, Reference Latent+, Realtime LoRA (selective + analyzer loaders + model-layer editors + every trainer variant), Clippy Reborn, Image of the Day, Model Diff to LoRA, Wan I2V Control, LongLook.
 4. **Node category.** Many ComfyUI nodes set a `CATEGORY` like `"loaders"`, `"sampling"`, `"image/upscaling"`, etc. We use that as a strong fallback signal.
 5. **Class-name regex.** Generic patterns: ends in `Encode` → encoders, ends in `Decode` → decoders, contains `Sample`/`Scheduler` → samplers, starts with `Load` → loaders, starts with `Save`/`Preview` → outputs, contains `Conditioning`/`Guidance`/`ControlNet` → conditioning, etc.
