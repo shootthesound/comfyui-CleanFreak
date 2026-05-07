@@ -53,15 +53,22 @@ Within each column, nodes are sorted by ComfyUI's execution order, with `SaveIma
 
 ### How classification works
 
-Three-step heuristic chain:
+Five-step lookup chain (highest priority wins):
 
-1. **Class-name override table.** A built-in lookup of every common class name → role. Covers the entire stock node set and the most popular custom packs.
-2. **Node category.** Many ComfyUI nodes set a `CATEGORY` like `"loaders"`, `"sampling"`, `"image/upscaling"`, etc. We use that as a strong fallback signal.
-3. **Class-name regex.** Generic patterns: ends in `Encode` → encoders, ends in `Decode` → decoders, contains `Sample`/`Scheduler` → samplers, starts with `Load` → loaders, starts with `Save`/`Preview` → outputs, contains `Conditioning`/`Guidance`/`ControlNet` → conditioning, etc.
+1. **Per-node session override** — anything you picked in this session's editor modal.
+2. **Per-class user override (saved to disk)** — anything you've ever pressed **Save assignments** on. Stored at `<ComfyUI>/user/workflow-tidy/role_overrides.json`. The file accumulates over time, so the more workflows you tidy the more nodes the classifier knows about by default.
+3. **Built-in class override table.** A lookup of every common class name → role. Covers the entire stock node set, the most popular custom packs, and every node from `shootthesound`'s pack family (Finding LoRA, Reference Latent+, Realtime LoRA, Clippy Reborn, Image of the Day, Model Diff to LoRA, Wan I2V Control, LongLook).
+4. **Node category.** Many ComfyUI nodes set a `CATEGORY` like `"loaders"`, `"sampling"`, `"image/upscaling"`, etc. We use that as a strong fallback signal.
+5. **Class-name regex.** Generic patterns: ends in `Encode` → encoders, ends in `Decode` → decoders, contains `Sample`/`Scheduler` → samplers, starts with `Load` → loaders, starts with `Save`/`Preview` → outputs, contains `Conditioning`/`Guidance`/`ControlNet` → conditioning, etc.
 
-Anything that survives all three falls into the `misc` column.
+Anything that survives all five falls into the `misc` column.
 
-There's also a third menu item — **✨ Tidy by Role — preview classification…** — that opens a modal listing exactly which bucket every node in your current workflow has been assigned to, so you can sanity-check before applying. The modal has a "Tidy now" button if it looks right.
+The **review & edit assignments** modal lists every node grouped under its current bucket, with a per-row dropdown to re-assign. Footer buttons:
+
+- **Tidy / Tidy + Groups (horizontal/vertical)** — apply with current assignments
+- **Save assignments** — promote every assignment in the list to a per-class default and write to `role_overrides.json`. Future workflows that contain the same classes will use these assignments automatically.
+- **Reset session edits** — drop the per-node session overrides on every visible node and re-classify from scratch.
+- **Forget saved** — wipe the entire `role_overrides.json`. Built-in classification rules still apply.
 
 ---
 
@@ -76,6 +83,18 @@ Re-tidying with `+ Groups` always wipes existing groups first, so stale groups n
 ### Connections are never touched
 
 ComfyUI links are stored by node id (not by position), so changing `node.pos = [x, y]` never breaks a wire. This pack only ever writes to `node.pos` and to the graph's groups list. No links, no inputs, no outputs, nothing else.
+
+---
+
+### HTTP routes (for the curious)
+
+Three routes live under `/workflow-tidy/`:
+
+- `GET  /workflow-tidy/overrides` — returns `{ overrides: {ClassName: role, …} }`
+- `POST /workflow-tidy/overrides` — body `{ overrides: {…} }`, replaces saved overrides with the supplied map
+- `POST /workflow-tidy/overrides/clear` — wipes saved overrides (no body)
+
+Storage: `<ComfyUI>/user/workflow-tidy/role_overrides.json`. Live-editable on disk; restart ComfyUI to pick up manual edits.
 
 ---
 

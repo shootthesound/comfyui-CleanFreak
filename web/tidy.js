@@ -1,14 +1,86 @@
 // comfyui-workflow-tidy — one-click workflow layout by node role.
 //
-// Adds a "Tidy by Role" item to the canvas right-click menu. Every node is
-// classified into a role bucket (loaders / encoders / samplers / decoders /
-// outputs / etc.) and laid out in width-aware columns left-to-right, in
+// Adds a "Tidy by Role" item set to the canvas right-click menu. Every node
+// is classified into a role bucket (loaders / encoders / samplers / decoders
+// / outputs / etc.) and laid out in width-aware columns left-to-right, in
 // roughly the order the data flows through a typical workflow.
+//
+// User-level overrides — assignments the user picks in the editor modal and
+// then "Save"s — get persisted to the backend's
+//   <ComfyUI>/user/workflow-tidy/role_overrides.json
+// file via the /workflow-tidy/overrides routes. Subsequent sessions and
+// workflows pick those up automatically, so the classifier learns from the
+// user over time and gradually knows about more nodes than the built-in
+// override table covers.
 //
 // Connections are never touched — LiteGraph links are by node id, so moving
 // a node never breaks a wire.
 
 import { app } from "/scripts/app.js";
+
+const ROUTE_BASE = "/workflow-tidy";
+
+// Module-level cache of user role overrides keyed by node class name.
+// Populated lazily on first use and refreshed on every successful save.
+let USER_OVERRIDES = {};
+let USER_OVERRIDES_LOADED = false;
+let USER_OVERRIDES_LOAD_PROMISE = null;
+
+function ensureOverridesLoaded() {
+    if (USER_OVERRIDES_LOADED) return Promise.resolve(USER_OVERRIDES);
+    if (USER_OVERRIDES_LOAD_PROMISE) return USER_OVERRIDES_LOAD_PROMISE;
+    USER_OVERRIDES_LOAD_PROMISE = (async () => {
+        try {
+            const res = await fetch(`${ROUTE_BASE}/overrides`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data && typeof data.overrides === "object" && data.overrides) {
+                    USER_OVERRIDES = data.overrides;
+                }
+            }
+        } catch (e) {
+            console.warn("[workflow-tidy] failed to load user overrides:", e);
+        } finally {
+            USER_OVERRIDES_LOADED = true;
+            USER_OVERRIDES_LOAD_PROMISE = null;
+        }
+        return USER_OVERRIDES;
+    })();
+    return USER_OVERRIDES_LOAD_PROMISE;
+}
+
+async function saveUserOverrides(overrides) {
+    try {
+        const res = await fetch(`${ROUTE_BASE}/overrides`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ overrides }),
+        });
+        if (!res.ok) return false;
+        const data = await res.json();
+        if (data && typeof data.overrides === "object" && data.overrides) {
+            USER_OVERRIDES = data.overrides;
+            USER_OVERRIDES_LOADED = true;
+        }
+        return true;
+    } catch (e) {
+        console.warn("[workflow-tidy] failed to save user overrides:", e);
+        return false;
+    }
+}
+
+async function clearUserOverridesOnDisk() {
+    try {
+        const res = await fetch(`${ROUTE_BASE}/overrides/clear`, { method: "POST" });
+        if (!res.ok) return false;
+        USER_OVERRIDES = {};
+        USER_OVERRIDES_LOADED = true;
+        return true;
+    } catch (e) {
+        console.warn("[workflow-tidy] failed to clear user overrides:", e);
+        return false;
+    }
+}
 
 // =====================================================================
 // Role classification
@@ -83,6 +155,30 @@ const CLASS_OVERRIDES = {
     "ipadaptermodelloader": "loaders",
     "modelmergesimple": "loaders",
 
+    // shootthesound packs — Realtime LoRA (selective + analyzer loaders +
+    // model-layer editors, all of which modify the active model)
+    "applytrainedlora": "loaders",
+    "loraloaderwithanalysis": "loaders",
+    "sdxlselectiveloraloader": "loaders",
+    "zimageselectiveloraloader": "loaders",
+    "fluxselectiveloraloader": "loaders",
+    "wanselectiveloraloader": "loaders",
+    "qwenselectiveloraloader": "loaders",
+    "scheduledloraloader": "loaders",
+    "fluxanalyzerselectiveloaderv2": "loaders",
+    "fluxklein4banalyzerselectiveloaderv2": "loaders",
+    "fluxklein9banalyzerselectiveloaderv2": "loaders",
+    "qwenanalyzerselectiveloaderv2": "loaders",
+    "sdxlanalyzerselectiveloaderv2": "loaders",
+    "wananalyzerselectiveloaderv2": "loaders",
+    "zimageanalyzerselectiveloaderv2": "loaders",
+    "fluxmodellayereditor": "loaders",
+    "sdxlmodellayereditor": "loaders",
+    "sd15modellayereditor": "loaders",
+    "zimagemodellayereditor": "loaders",
+    "wanmodellayereditor": "loaders",
+    "qwenmodellayereditor": "loaders",
+
     // Image / latent input
     "loadimage": "image-input",
     "loadimagemask": "image-input",
@@ -94,6 +190,10 @@ const CLASS_OVERRIDES = {
     "imageloader": "image-input",
     "primitivenode": "prompts",
     "primitive": "prompts",
+
+    // shootthesound packs — image-input loaders
+    "clippyrebornimageloader": "image-input",
+    "imageofdayloader": "image-input",
 
     // Encoders → CONDITIONING
     "cliptextencode": "encoders",
@@ -122,6 +222,15 @@ const CLASS_OVERRIDES = {
     "fluxguidance": "conditioning",
     "modelsamplingflux": "conditioning",
     "modelsamplingsd3": "conditioning",
+
+    // shootthesound packs — Wan I2V conditioning extras + LongLook (Wan
+    // motion / continuation / FreeLong-related) modify CONDITIONING
+    "wani2vconditioningmaskpro": "conditioning",
+    "wancontinuationconditioning": "conditioning",
+    "wanmotionscale": "conditioning",
+    "wanmotionscaleadvanced": "conditioning",
+    "wanfreelong": "conditioning",
+    "wanfreelongenforcer": "conditioning",
 
     // Samplers
     "ksampler": "samplers",
@@ -153,6 +262,9 @@ const CLASS_OVERRIDES = {
     "imagescale": "post",
     "imagescaleby": "post",
 
+    // shootthesound packs — frame manipulation
+    "dropfirstframes": "post",
+
     // Output / preview
     "saveimage": "outputs",
     "previewimage": "outputs",
@@ -160,17 +272,40 @@ const CLASS_OVERRIDES = {
     "saveanimatedpng": "outputs",
     "savevideo": "outputs",
     "savelatent": "outputs",
+
+    // shootthesound packs — anything that produces a saved file (LoRA
+    // extraction, in-Comfy LoRA training)
+    "modeldifftolora": "outputs",
+    "realtimeloratrainer": "outputs",
+    "sdxlloratrainer": "outputs",
+    "sd15loratrainer": "outputs",
+    "musubizimageloratrainer": "outputs",
+    "musubizimagebaseloratrainer": "outputs",
+    "musubifluxkleinloratrainer": "outputs",
+    "musubiqwenimageloratrainer": "outputs",
+    "musubiqwenimageeditloratrainer": "outputs",
+    "musubiwanloratrainer": "outputs",
 };
 
 // Fallback classifier: regex on (lowercased) class name + node category.
-// Per-node user override (set from the preview modal) wins over everything
-// else, so once a user re-assigns a node it stays in that bucket for the
-// rest of the session.
+// Lookup priority (highest wins):
+//   1. node._tidy_role          — per-node override the user picked in the
+//                                  modal during this session
+//   2. USER_OVERRIDES[className] — per-class override the user has saved to
+//                                  disk via the editor's Save button
+//   3. CLASS_OVERRIDES[className]— built-in table covering stock + popular
+//                                  custom packs
+//   4. node CATEGORY string     — set by many ComfyUI nodes
+//   5. class-name regex         — generic fallback
 function classifyNode(node) {
     if (node._tidy_role && ROLES.includes(node._tidy_role)) {
         return node._tidy_role;
     }
-    const cls = (node.type || node.comfyClass || "").toLowerCase();
+    const rawCls = node.type || node.comfyClass || "";
+    if (USER_OVERRIDES[rawCls] && ROLES.includes(USER_OVERRIDES[rawCls])) {
+        return USER_OVERRIDES[rawCls];
+    }
+    const cls = rawCls.toLowerCase();
 
     // 1) Exact override
     if (CLASS_OVERRIDES[cls]) return CLASS_OVERRIDES[cls];
@@ -496,13 +631,60 @@ function showEditorModal(nodes) {
     cancelBtn.addEventListener("click", close);
 
     const resetBtn = document.createElement("button");
-    resetBtn.textContent = "Reset overrides";
-    resetBtn.title = "Clear every per-node role override and re-classify from scratch";
+    resetBtn.textContent = "Reset session edits";
+    resetBtn.title = "Clear every per-node role override from this session and re-classify from scratch";
     resetBtn.style.cssText = "background: #5a4444; color: #ddd; border: none; padding: 7px 14px; border-radius: 4px; cursor: pointer;";
     resetBtn.addEventListener("click", () => {
         for (const { n } of rows) delete n._tidy_role;
         close();
         showClassificationEditor();
+    });
+
+    const saveBtn = document.createElement("button");
+    saveBtn.textContent = "Save assignments";
+    saveBtn.title = "Promote every per-node assignment in this list to a per-class default, saved to <ComfyUI>/user/workflow-tidy/role_overrides.json. Future workflows that contain the same node classes will use these assignments automatically.";
+    saveBtn.style.cssText = "background: #6b8d4a; color: #fff; border: none; padding: 7px 14px; border-radius: 4px; cursor: pointer;";
+    saveBtn.addEventListener("click", async () => {
+        // Build the new global overrides map by applying every visible row's
+        // current role on top of the existing USER_OVERRIDES. We don't drop
+        // pre-existing overrides for classes the current workflow doesn't
+        // contain — those would be lost otherwise.
+        const merged = { ...USER_OVERRIDES };
+        for (const { n } of rows) {
+            const cls = n.type || n.comfyClass;
+            if (!cls) continue;
+            // Find the role currently shown in the dropdown for this row.
+            // The select has been updated as the user changed it.
+            const role = n._tidy_role || classifyNode(n);
+            if (role && ROLES.includes(role)) merged[cls] = role;
+        }
+        const ok = await saveUserOverrides(merged);
+        if (ok) {
+            // Once saved at the class level, drop the per-node session
+            // override so future tidies read straight from USER_OVERRIDES.
+            for (const { n } of rows) delete n._tidy_role;
+            saveBtn.textContent = "Saved ✓";
+            saveBtn.disabled = true;
+            setTimeout(() => { saveBtn.textContent = "Save assignments"; saveBtn.disabled = false; }, 1400);
+        } else {
+            alert("Saving failed — see browser console for details.");
+        }
+    });
+
+    const clearDiskBtn = document.createElement("button");
+    clearDiskBtn.textContent = "Forget saved";
+    clearDiskBtn.title = "Wipe the saved role_overrides.json file. Built-in classification rules still apply.";
+    clearDiskBtn.style.cssText = "background: #5a4444; color: #ddd; border: none; padding: 7px 14px; border-radius: 4px; cursor: pointer;";
+    clearDiskBtn.addEventListener("click", async () => {
+        if (!window.confirm("Delete every saved role override? Built-in classification rules will still apply.")) return;
+        const ok = await clearUserOverridesOnDisk();
+        if (ok) {
+            for (const { n } of rows) delete n._tidy_role;
+            close();
+            showClassificationEditor();
+        } else {
+            alert("Failed to clear — see browser console for details.");
+        }
     });
 
     const tidyHBtn = document.createElement("button");
@@ -526,7 +708,9 @@ function showEditorModal(nodes) {
     tidyVGBtn.addEventListener("click", () => { close(); tidyByRole("vertical", { groups: true }); });
 
     footer.appendChild(cancelBtn);
+    footer.appendChild(clearDiskBtn);
     footer.appendChild(resetBtn);
+    footer.appendChild(saveBtn);
     footer.appendChild(tidyHBtn);
     footer.appendChild(tidyVBtn);
     footer.appendChild(tidyHGBtn);
@@ -548,7 +732,11 @@ function showEditorModal(nodes) {
 
 app.registerExtension({
     name: "WorkflowTidy.ByRole",
-    setup(app) {
+    async setup(app) {
+        // Kick the user-overrides fetch immediately so the first tidy /
+        // editor call doesn't have to wait on the network round-trip.
+        ensureOverridesLoaded();
+
         const orig = LGraphCanvas.prototype.getCanvasMenuOptions;
         LGraphCanvas.prototype.getCanvasMenuOptions = function () {
             const options = orig.apply(this, arguments);
