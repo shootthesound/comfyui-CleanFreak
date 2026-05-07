@@ -2,7 +2,8 @@
 
 <p align="center">
   One-click <strong>tidy by role</strong> for any ComfyUI workflow.<br>
-  Loaders go in one column. Encoders in the next. Then samplers, decoders, outputs. Width-aware. Group cards. Connections preserved.
+  Loaders go in one column. Encoders in the next. Then samplers, decoders, outputs. Width-aware. Coloured group cards. Connections preserved.<br>
+  <em>Ships pre-classified for the entire stock node set plus the top 5 community packs (Impact-Pack, controlnet_aux, rgthree-comfy, VideoHelperSuite, IPAdapter_plus). Edit anything you don't like and save it — the classifier learns over time.</em>
 </p>
 
 <p align="center">
@@ -57,7 +58,10 @@ Five-step lookup chain (highest priority wins):
 
 1. **Per-node session override** — anything you picked in this session's editor modal.
 2. **Per-class user override (saved to disk)** — anything you've ever pressed **Save assignments** on. Stored at `<ComfyUI>/user/cleanfreak/role_overrides.json`. The file accumulates over time, so the more workflows you tidy the more nodes the classifier knows about by default.
-3. **Built-in class override table.** A lookup of every common class name → role. Covers the entire stock node set, the most popular custom packs, and every node from `shootthesound`'s pack family (Finding LoRA, Reference Latent+, Realtime LoRA, Clippy Reborn, Image of the Day, Model Diff to LoRA, Wan I2V Control, LongLook).
+3. **Built-in class override table.** A lookup of every common class name → role. Out of the box this covers:
+   - **The entire stock ComfyUI node set** — checkpoint/UNET/VAE/CLIP/ControlNet/LoRA loaders, every text encoder, conditioning manipulators (combine / concat / set timestep / set mask / set area / FluxGuidance / model-sampling), KSampler + KSamplerAdvanced + custom-sampler / scheduler / guider / noise nodes, VAEDecode tiled/untiled, image input / load / empty latent, save / preview / animated webp / animated png / save video / save latent, image upscale / blur / sharpen / blend / crop / resize / scale.
+   - **The top 5 community packs** — `comfyui-Impact-Pack` (every detailer / regional sampler / SEGS pipeline / scheduler / SAM loader / wildcard encoder / sender-receiver classified), `comfyui_controlnet_aux` (all ~50 preprocessors → `post`), `rgthree-comfy` (Power LoRA Loader, Power Prompt variants, Image Resize, Image Comparer, KSampler Config, Seed, etc.), `comfyui-videohelpersuite` (every `VHS_Load*` → `image-input`, `VideoCombine` → `outputs`, batched VAE → `encoders`/`decoders`), `ComfyUI_IPAdapter_plus` (model/embed/insightface loaders → `loaders`, every `IPAdapter*` applier → `conditioning`).
+   - **Every node in `shootthesound`'s pack family** — Finding LoRA, Reference Latent+, Realtime LoRA (selective + analyzer loaders + model-layer editors + every trainer variant), Clippy Reborn, Image of the Day, Model Diff to LoRA, Wan I2V Control, LongLook.
 4. **Node category.** Many ComfyUI nodes set a `CATEGORY` like `"loaders"`, `"sampling"`, `"image/upscaling"`, etc. We use that as a strong fallback signal.
 5. **Class-name regex.** Generic patterns: ends in `Encode` → encoders, ends in `Decode` → decoders, contains `Sample`/`Scheduler` → samplers, starts with `Load` → loaders, starts with `Save`/`Preview` → outputs, contains `Conditioning`/`Guidance`/`ControlNet` → conditioning, etc.
 
