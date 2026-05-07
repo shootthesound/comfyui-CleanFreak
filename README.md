@@ -3,7 +3,11 @@
 <p align="center">
   One-click <strong>tidy by role</strong> for any ComfyUI workflow.<br>
   Loaders go in one column. Encoders in the next. Then samplers, decoders, outputs. Width-aware. Coloured group cards. Connections preserved.<br>
-  <em>Ships pre-classified for the entire stock node set plus the most-used community packs — Impact-Pack, controlnet_aux, rgthree-comfy, VideoHelperSuite, IPAdapter_plus, WAS Node Suite, comfyui-easy-use, RES4LYF, comfyui-dynamicprompts, comfyui-ollama, comfyui-automaticcfg, Comfyroll, and the entire shootthesound pack family. Edit anything you don't like and save it — the classifier learns over time.</em>
+  <em>Ships pre-classified for the entire stock node set plus the most-used community packs — Impact-Pack, controlnet_aux, rgthree-comfy, VideoHelperSuite, IPAdapter_plus, WAS Node Suite, comfyui-easy-use, KJNodes, RES4LYF, comfyui-dynamicprompts, comfyui-ollama, comfyui-automaticcfg, Comfyroll, LTXVideo / LTXTricks, and the entire shootthesound pack family. Edit anything you don't like and save it — the classifier learns over time.</em>
+</p>
+
+<p align="center">
+  <strong>1200+ node classes pre-classified out of the box.</strong>
 </p>
 
 <p align="center">
