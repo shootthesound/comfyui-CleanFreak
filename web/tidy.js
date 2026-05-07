@@ -1368,29 +1368,60 @@ function bucketize(nodes) {
     return buckets;
 }
 
-// Unpack any group nodes (and any nested ones they contain) into the main
-// graph. Uses ComfyUI's built-in `convertToNodes()` method that's installed
-// on every group-node instance — same code path triggered by the right-click
-// "Convert to nodes" menu item or the Alt+Shift+G shortcut.
+// Unpack every "container" node — both modern subgraphs (post-0.3.51) AND
+// legacy group nodes — into the main graph. Two different APIs to call:
 //
-// Returns the number of group nodes unpacked. Iterates until no group nodes
-// remain so nested cases get fully flattened. Bails after a sane safety
-// ceiling so a buggy node can't infinite-loop.
+//   - Modern subgraph: `graph.unpackSubgraph(node)` — added in
+//     Comfy-Org/ComfyUI_frontend#4840. The method lives on the parent
+//     LGraph instance, takes the subgraph node, and inlines its inner
+//     nodes back into the parent. Same code path the right-click "Unpack
+//     subgraph" menu item uses.
+//   - Legacy group node: `node.convertToNodes()` — instance method on the
+//     group node itself. Same code path as right-click "Convert to nodes" /
+//     Alt+Shift+G.
+//
+// We try subgraph first (cheap, succeeds only on a SubgraphNode), then fall
+// back to legacy convertToNodes(). Iterates passes so nested containers get
+// fully flattened: unpacking a parent reveals its children, and the next
+// pass catches them. Bails after a safety ceiling so a buggy node can't
+// infinite-loop.
 function unpackAllGroups() {
     const graph = app.graph;
     if (!graph || !graph._nodes) return 0;
+
+    // Duck-type check for modern SubgraphNode — these expose a `.subgraph`
+    // (the inner LGraph) and a `getInnerNodes()` method, neither of which
+    // exists on legacy nodes or group nodes.
+    const isSubgraphNode = (n) => !!(n && (n.subgraph != null || typeof n.getInnerNodes === "function"));
+
     let totalUnpacked = 0;
     for (let pass = 0; pass < 16; pass++) {
-        const groupNodes = graph._nodes.filter((n) => typeof n.convertToNodes === "function");
-        if (groupNodes.length === 0) break;
-        for (const gn of groupNodes) {
-            try {
-                gn.convertToNodes();
-                totalUnpacked++;
-            } catch (e) {
-                console.warn("[cleanfreak] convertToNodes() failed on", gn?.type, e);
+        const nodes = graph._nodes.slice(); // snapshot — unpacking mutates
+        let unpackedThisPass = 0;
+        for (const node of nodes) {
+            // Try modern subgraph first.
+            if (isSubgraphNode(node) && typeof graph.unpackSubgraph === "function") {
+                try {
+                    graph.unpackSubgraph(node);
+                    totalUnpacked++;
+                    unpackedThisPass++;
+                    continue;
+                } catch (e) {
+                    console.warn("[cleanfreak] unpackSubgraph failed on", node?.type, e);
+                }
+            }
+            // Fall back to legacy group node.
+            if (typeof node.convertToNodes === "function") {
+                try {
+                    node.convertToNodes();
+                    totalUnpacked++;
+                    unpackedThisPass++;
+                } catch (e) {
+                    console.warn("[cleanfreak] convertToNodes() failed on", node?.type, e);
+                }
             }
         }
+        if (unpackedThisPass === 0) break;
     }
     if (totalUnpacked > 0) graph.setDirtyCanvas(true, true);
     return totalUnpacked;
@@ -1754,8 +1785,8 @@ function showEditorModal(nodes) {
     unpackChk.type = "checkbox";
     unpackChk.style.cssText = "margin: 0;";
     const unpackTxt = document.createElement("span");
-    unpackTxt.textContent = "Unpack group nodes first";
-    unpackTxt.title = "Before tidying, expand every group node (and any nested ones) into its constituent nodes — same as ComfyUI's right-click ‘Convert to Nodes’.";
+    unpackTxt.textContent = "Unpack subgraphs / group nodes first";
+    unpackTxt.title = "Before tidying, expand every modern subgraph (graph.unpackSubgraph) AND every legacy group node (convertToNodes) into its constituent nodes. Iterates so nested containers fully flatten.";
     unpackWrap.appendChild(unpackChk);
     unpackWrap.appendChild(unpackTxt);
 
@@ -1844,19 +1875,19 @@ app.registerExtension({
                 },
             });
             options.push({
-                content: "✨ Tidy by Role — Unpack groups + Tidy + Groups (horizontal)",
+                content: "✨ Tidy by Role — Unpack subgraphs/groups + Tidy + Groups (horizontal)",
                 callback: () => tidyByRole("horizontal", { groups: true, unpack: true }),
             });
             options.push({
-                content: "✨ Tidy by Role — Unpack groups + Tidy + Groups (vertical)",
+                content: "✨ Tidy by Role — Unpack subgraphs/groups + Tidy + Groups (vertical)",
                 callback: () => tidyByRole("vertical", { groups: true, unpack: true }),
             });
             options.push({
-                content: "✨ Tidy by Role — Unpack all group nodes (no tidy)",
+                content: "✨ Tidy by Role — Unpack all subgraphs / group nodes (no tidy)",
                 callback: () => {
                     const n = unpackAllGroups();
                     if (typeof window !== "undefined") {
-                        alert(`Unpacked ${n} group node${n === 1 ? "" : "s"}.`);
+                        alert(`Unpacked ${n} subgraph${n === 1 ? "" : "s"} / group node${n === 1 ? "" : "s"}.`);
                     }
                 },
             });

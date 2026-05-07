@@ -27,9 +27,9 @@ Right-click on the canvas (empty space, not on a node) and pick one of:
 - **✨ Tidy by Role + Groups (horizontal)** — columns left-to-right, plus a colour-coded group card around each role bucket
 - **✨ Tidy by Role + Groups (vertical)** — same, vertical
 - **✨ Tidy by Role — Delete all groups** — wipe every group on the canvas without touching node positions
-- **✨ Tidy by Role — Unpack groups + Tidy + Groups (horizontal/vertical)** — first flatten every group node (and any nested ones) into its constituent nodes via ComfyUI's built-in `convertToNodes()`, then tidy with coloured group cards. Use this when a workflow uses ComfyUI group-nodes and you want the underlying nodes laid out properly.
-- **✨ Tidy by Role — Unpack all group nodes (no tidy)** — flatten group nodes without re-laying anything out.
-- **✨ Tidy by Role — review & edit assignments…** — open an interactive modal listing every node grouped by its current bucket, each with a dropdown to re-assign its role. Per-node overrides stick for the rest of the session and are used by every subsequent Tidy. The footer has Tidy / Tidy + Groups buttons for both orientations, an **Unpack group nodes first** toggle, plus Save / Reset / Forget-saved buttons.
+- **✨ Tidy by Role — Unpack subgraphs/groups + Tidy + Groups (horizontal/vertical)** — first flatten every container node (modern **subgraphs** via `graph.unpackSubgraph()` AND legacy **group nodes** via `convertToNodes()`), iterating until nothing remains so nested containers fully flatten, then tidy with coloured group cards.
+- **✨ Tidy by Role — Unpack all subgraphs / group nodes (no tidy)** — flatten every container node without re-laying anything out.
+- **✨ Tidy by Role — review & edit assignments…** — open an interactive modal listing every node grouped by its current bucket, each with a dropdown to re-assign its role. Per-node overrides stick for the rest of the session and are used by every subsequent Tidy. The footer has Tidy / Tidy + Groups buttons for both orientations, an **Unpack subgraphs / group nodes first** toggle, plus Save / Reset / Forget-saved buttons.
 
 The two `+ Groups` variants delete any pre-existing groups before drawing fresh ones, so re-tidying never stacks stale groups on top of new ones.
 
