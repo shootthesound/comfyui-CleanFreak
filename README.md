@@ -19,7 +19,18 @@ Every ComfyUI workflow I open ends up looking like a plate of spaghetti within a
 
 ### What it does
 
-Right-click on the canvas (empty space, not on a node) and pick **✨ Tidy by Role (horizontal)** or **✨ Tidy by Role (vertical)**. Every node in the workflow is classified into one of these buckets:
+Right-click on the canvas (empty space, not on a node) and pick one of:
+
+- **✨ Tidy by Role (horizontal)** — columns left-to-right, no groups
+- **✨ Tidy by Role (vertical)** — rows top-to-bottom, no groups
+- **✨ Tidy by Role + Groups (horizontal)** — columns left-to-right, plus a colour-coded group card around each role bucket
+- **✨ Tidy by Role + Groups (vertical)** — same, vertical
+- **✨ Tidy by Role — Delete all groups** — wipe every group on the canvas without touching node positions
+- **✨ Tidy by Role — preview classification…** — show a modal listing exactly which bucket every node landed in, with a "Tidy now" button
+
+The two `+ Groups` variants delete any pre-existing groups before drawing fresh ones, so re-tidying never stacks stale groups on top of new ones.
+
+Every node in the workflow is classified into one of these buckets:
 
 | Role | Examples |
 |---|---|
@@ -54,9 +65,17 @@ There's also a third menu item — **✨ Tidy by Role — preview classification
 
 ---
 
+### Group cards
+
+The `+ Groups` variants draw a coloured group card around each non-empty role bucket after tidying. Each role has its own muted-but-distinguishable colour so a glance tells you which column is which. The card title is the role's display name (`Loaders`, `Encoders`, `Conditioning`, `Samplers`, …).
+
+Re-tidying with `+ Groups` always wipes existing groups first, so stale groups never accumulate. If you only want to nuke the groups (without re-arranging nodes), use **Delete all groups**.
+
+---
+
 ### Connections are never touched
 
-ComfyUI links are stored by node id (not by position), so changing `node.pos = [x, y]` never breaks a wire. This pack only ever writes to `node.pos`. No links, no inputs, no outputs, nothing else.
+ComfyUI links are stored by node id (not by position), so changing `node.pos = [x, y]` never breaks a wire. This pack only ever writes to `node.pos` and to the graph's groups list. No links, no inputs, no outputs, nothing else.
 
 ---
 

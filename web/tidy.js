@@ -30,6 +30,36 @@ const ROLES = [
     "misc",           // Anything we couldn't classify
 ];
 
+// Group-card colours per role. Picked from a LiteGraph-friendly palette —
+// muted enough to coexist with node body colours, distinct enough that you
+// can read which column is which at a glance.
+const ROLE_COLOURS = {
+    "loaders":      "#c47b30",
+    "image-input":  "#3f789e",
+    "prompts":      "#598a4e",
+    "encoders":     "#4a5fa1",
+    "conditioning": "#8a3ea1",
+    "samplers":     "#a13030",
+    "decoders":     "#3e8f6f",
+    "post":         "#2f8a8a",
+    "outputs":      "#a8862a",
+    "misc":         "#666666",
+};
+
+// Display-friendly title for each role group.
+const ROLE_TITLES = {
+    "loaders":      "Loaders",
+    "image-input":  "Image / Latent Input",
+    "prompts":      "Prompts",
+    "encoders":     "Encoders",
+    "conditioning": "Conditioning",
+    "samplers":     "Samplers",
+    "decoders":     "Decoders",
+    "post":         "Image Post",
+    "outputs":      "Output / Save",
+    "misc":         "Misc",
+};
+
 // Exact-class fast-path table. Lower-cased class name → role.
 const CLASS_OVERRIDES = {
     // Loaders
@@ -197,9 +227,64 @@ function bucketize(nodes) {
     return buckets;
 }
 
-function tidyByRole(orientation = "horizontal") {
+function deleteAllGroups() {
+    const graph = app.graph;
+    if (!graph || !graph._groups) return 0;
+    // Snapshot the array — graph.remove() mutates _groups while we iterate.
+    const groups = graph._groups.slice();
+    let removed = 0;
+    for (const g of groups) {
+        try { graph.remove(g); removed++; } catch (e) { /* noop */ }
+    }
+    return removed;
+}
+
+function createRoleGroups(buckets, usedRoles) {
+    const graph = app.graph;
+    if (!graph || typeof LiteGraph === "undefined" || !LiteGraph.LGraphGroup) return;
+
+    const PAD = 24;            // padding between node and group border
+    const TITLE_BAR = 36;      // extra space at top of group for the title
+
+    for (const role of usedRoles) {
+        const nodes = buckets[role];
+        if (!nodes || nodes.length === 0) continue;
+
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        for (const n of nodes) {
+            const x = n.pos[0];
+            const y = n.pos[1];
+            const w = nodeWidth(n);
+            const h = nodeHeight(n);
+            if (x < minX) minX = x;
+            if (y < minY) minY = y;
+            if (x + w > maxX) maxX = x + w;
+            if (y + h > maxY) maxY = y + h;
+        }
+        if (!isFinite(minX)) continue;
+
+        const group = new LiteGraph.LGraphGroup(ROLE_TITLES[role] || role);
+        group.pos = [minX - PAD, minY - PAD - TITLE_BAR];
+        group.size = [
+            (maxX - minX) + PAD * 2,
+            (maxY - minY) + PAD * 2 + TITLE_BAR,
+        ];
+        group.color = ROLE_COLOURS[role] || "#666";
+        // LiteGraph stores font_size on the group; default looks tiny inside
+        // the wide title bar, so bump it to something readable.
+        group.font_size = 24;
+        graph.add(group);
+    }
+}
+
+function tidyByRole(orientation = "horizontal", opts = {}) {
+    const { groups: addGroups = false } = opts;
     const graph = app.graph;
     if (!graph || !graph._nodes || !graph._nodes.length) return;
+
+    // If we're going to add coloured role groups, wipe any pre-existing
+    // groups first — otherwise old / stale group cards stack on every tidy.
+    if (addGroups) deleteAllGroups();
 
     // Anchor at the bounding box origin of the current graph so the tidy
     // layout starts roughly where the workflow already lives — keeps the
@@ -236,6 +321,8 @@ function tidyByRole(orientation = "horizontal") {
     } else {
         layoutHorizontal(buckets, usedRoles, originX, originY);
     }
+
+    if (addGroups) createRoleGroups(buckets, usedRoles);
 
     app.graph.setDirtyCanvas(true, true);
 }
@@ -378,6 +465,25 @@ app.registerExtension({
             options.push({
                 content: "✨ Tidy by Role (vertical)",
                 callback: () => tidyByRole("vertical"),
+            });
+            options.push({
+                content: "✨ Tidy by Role + Groups (horizontal)",
+                callback: () => tidyByRole("horizontal", { groups: true }),
+            });
+            options.push({
+                content: "✨ Tidy by Role + Groups (vertical)",
+                callback: () => tidyByRole("vertical", { groups: true }),
+            });
+            options.push({
+                content: "✨ Tidy by Role — Delete all groups",
+                callback: () => {
+                    const n = deleteAllGroups();
+                    app.graph.setDirtyCanvas(true, true);
+                    if (typeof window !== "undefined") {
+                        // Tiny inline confirmation; alert is sufficient for one-off.
+                        alert(`Deleted ${n} group${n === 1 ? "" : "s"}.`);
+                    }
+                },
             });
             options.push({
                 content: "✨ Tidy by Role — preview classification…",
