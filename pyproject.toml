@@ -1,0 +1,20 @@
+[project]
+name = "comfyui-cleanfreak"
+description = "One-click tidy-by-role for any ComfyUI workflow — loaders, encoders, samplers, decoders, and outputs each sorted into their own column with coloured group cards and connections preserved. 1200+ node classes pre-classified out of the box, and the classifier learns the ones you edit."
+version = "1.0.0"
+license = "MIT"
+authors = [
+    { name = "Peter Neill" }
+]
+readme = "README.md"
+requires-python = ">=3.10"
+
+[project.urls]
+Homepage = "https://github.com/shootthesound/comfyui-CleanFreak"
+Repository = "https://github.com/shootthesound/comfyui-CleanFreak"
+Issues = "https://github.com/shootthesound/comfyui-CleanFreak/issues"
+
+[tool.comfy]
+PublisherId = "shootthesound"
+DisplayName = "CleanFreak"
+Icon = ""
